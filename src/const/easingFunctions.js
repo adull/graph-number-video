@@ -3,7 +3,7 @@ const easingFunctions = {
     { x1: 0.12, y1: 0, x2: 0.39, y2: 0 }
   ],
   easeOutSine: () => [
-    { x1: 0.61, y1: 0, x2: 0.88, y2: 1 }
+    { x1: 0.61, y1: 1, x2: 0.88, y2: 1 }
   ],
   easeInOutSine: () => [
     { x1: 0.37, y1: 0, x2: 0.63, y2: 1 }
@@ -12,7 +12,7 @@ const easingFunctions = {
     { x1: 0.11, y1: 0, x2: 0.5, y2: 1 }
   ],
   easeOutQuad: () => [
-    { x1: 0.5, y1: 0, x2: 0.89, y2: 1 }
+    { x1: 0.5, y1: 1, x2: 0.89, y2: 1 }
   ],
   easeInOutQuad: () => [
     { x1: 0.45, y1: 0, x2: 0.55, y2: 1 }
