@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { paper } from 'paper'
 
 const Paper = ({ bezierPoints }) => {
-    console.log({bezierPoints})
+    // console.log({bezierPoints})
     const parentRef = useRef(null)
     const childRef = useRef(null)
     const tool = new paper.Tool()
-    const hitResultRef = useRef(null);
+    const hitResultRef = useRef(null)
+    const isCreatingNewSegmentRef = useRef(false)
     // for use with the tool
     const hitOptions = {
         segments: true,
@@ -21,12 +22,12 @@ const Paper = ({ bezierPoints }) => {
     useEffect(() => {
         console.log(`useeffect [] draw`)
         const element = parentRef.current
-        if (!element) return;
+        if (!element) return
       
         const observer = new ResizeObserver((entries) => {
           for (let entry of entries) {
             initPaper()
-            const { width, height } = entry.contentRect;
+            const { width, height } = entry.contentRect
             setDisplay({ width, height })
 
             const canvas = document.getElementById(`paper`)
@@ -37,16 +38,16 @@ const Paper = ({ bezierPoints }) => {
             drawInitLine()
             
           }
-        });
+        })
       
-        observer.observe(element);
+        observer.observe(element)
         
       
         return () => {
-          observer.unobserve(element);
-          observer.disconnect();
-        };
-      }, []);
+          observer.unobserve(element)
+          observer.disconnect()
+        }
+      }, [])
 
       useEffect(() => {
         clearBezierLine()
@@ -74,24 +75,45 @@ const Paper = ({ bezierPoints }) => {
       }
 
       const clearBezierLine = () => {
-        console.log(paper)
+        // console.log(paper)
         // const bezierLine = paper.project?.activeLayer?.namedItem('bezierLine');
         const find = paper?.project?.getItems({ name: `bezierLine` })
         if(!find || find?.length === 0) return
         else {
-            console.log({ find })
+            // console.log({ find })
             const bezierLine = find[0]
-            bezierLine.remove(); 
+            bezierLine.remove()
         }
-      };
+      }
+
+      const sampleBezierX = (seg1, seg2, steps = 10) => {
+        const P0 = seg1.point
+        const P1 = seg1.point.add(seg1.handleOut)
+        const P2 = seg2.point.add(seg2.handleIn)
+        const P3 = seg2.point
+        let prevX = P0.x
+        for(let i=1; i<=steps; i++) {
+            const t = i / steps
+            const x = cubicBezier(P0.x, P1.x, P2.x, P3.x, t)
+            if(x < prevX) return false
+            prevX = x
+        }
+        return true
+    }
+    const cubicBezier = (p0, p1, p2, p3, t) => {
+        return Math.pow(1-t,3)*p0 + 3*Math.pow(1-t,2)*t*p1 + 3*(1-t)*t*t*p2 + Math.pow(t,3)*p3
+    }
+
+
+
 
       const bezierPath = (beziers) => {
         const { view } = paper
         if(!view) return 
-        const w = view.size.width;
-        const h = view.size.height;
+        const w = view.size.width
+        const h = view.size.height
       
-        if (!beziers || beziers.length === 0) return null;
+        if (!beziers || beziers.length === 0) return null
       
         const start = new paper.Point(0, h);
         const path = new paper.Path({
@@ -101,30 +123,29 @@ const Paper = ({ bezierPoints }) => {
           strokeCap: `round`,
           fullySelected: true,
           name: `bezierLine`
-        });
+        })
 
 
       
-        let prevPoint = start;
+        let prevPoint = start
       
         beziers.forEach((bezier, i) => {
-          const endX = ((i + 1) / beziers.length) * w;
-          const endY = 0;
-          const end = new paper.Point(endX, endY);
+          const endX = ((i + 1) / beziers.length) * w
+          const endY = 0
+          const end = new paper.Point(endX, endY)
       
-          const cp1 = new paper.Point(bezier.x1 * w, (1 - bezier.y1) * h);
-          const cp2 = new paper.Point(bezier.x2 * w, (1 - bezier.y2) * h);
+          const cp1 = new paper.Point(bezier.x1 * w, (1 - bezier.y1) * h)
+          const cp2 = new paper.Point(bezier.x2 * w, (1 - bezier.y2) * h)
       
-          path.add(end);
+          path.add(end)
       
-          path.segments[path.segments.length - 2].handleOut = cp1.subtract(prevPoint);
-          path.segments[path.segments.length - 1].handleIn  = cp2.subtract(end);
+          path.segments[path.segments.length - 2].handleOut = cp1.subtract(prevPoint)
+          path.segments[path.segments.length - 1].handleIn  = cp2.subtract(end)
       
-          prevPoint = end;
-        });
+          prevPoint = end
+        })
 
-      
-        return path;
+        return path
     }
 
     tool.onMouseMove = function(event) {
@@ -144,38 +165,37 @@ const Paper = ({ bezierPoints }) => {
 
         if(hitResult) {
             document.body.style.cursor = "grabbing"
-            console.log({hitResult})
+            // console.log({hitResult})
             if(hitResult.type === `stroke` && hitResult.item) {
+                isCreatingNewSegmentRef.current = true
                 const path = hitResult.item
                 const index = hitResult.location.index + 1
                 const newSegment = path.insert(hitResult.location.index + 1, event.point)
-                path.smooth()
-                // path.smooth()
+
+                path.smooth({ from: index - 1, to: index + 1})
                 hitResultRef.current = { type: 'segment', segment: newSegment, index }
 
             }
         } else {
-            console.log(`ummm`)
+            // console.log(`ummm`)
         }
-        // if([`handle-in`, `handle-out`].includes(hitResult.type)) {
-        //     selectedHandleRef.current = hitResult
-        // }
         
         return
-    };
+    }
 
     tool.onMouseDrag = function(event) {
         event.preventDefault()
         const hitResult = hitResultRef.current
         if(hitResult) {
-            let xDeltaIsZero = false
+            const path = hitResult.segment.path
+            const segments = path.segments
             if(hitResult.type === `segment`) {
-                const path = hitResult.segment.path
-                const segments = path.segments
-                console.log({ segments })
+                let xDeltaIsZero = false
+                let yDeltaIsZero = false
+                // console.log({ segments })
                 
                 const hitResultPoint = hitResult.segment.point
-                console.log({hitResultPoint, segments})
+                // console.log({hitResultPoint, segments})
                 const [firstPoint, lastPoint] = [segments[0]?.point, segments[segments.length - 1]?.point]
 
                 if(hitResultPoint.equals(firstPoint) || hitResultPoint.equals(lastPoint)) {
@@ -183,34 +203,44 @@ const Paper = ({ bezierPoints }) => {
                 }
 
                 const index = hitResult.segment.index
-                const getPreviousPoint = () => {
-                    if(index - 1 < 0) {
-                        return
-                    } 
-                    console.log({index})
-                    console.log(segments[index - 1])
-                    return segments[index - 1]?.point
-                }
-                const getNextPoint = () => {
-                    if(index + 1 > segments.length) {
-                        return
-                    } 
-                    return segments[index + 1]?.point
-                }
+                
 
                 const eventDelta = event.delta
-                const [previousPointX, nextPointX] = [getPreviousPoint()?.x, getNextPoint()?.x]
-                if(event.point.x < previousPointX || event.point.x > nextPointX) {
-                    xDeltaIsZero = true
+                if(!xDeltaIsZero) {
+                    const checkPrevious = sampleBezierX(segments[index - 1], segments[index])
+                    const checkNext = sampleBezierX(segments[index], segments[index + 1])
+                    // console.log({checkPrevious, checkNext})
+                    if(!checkPrevious || !checkNext) {
+                        console.log({ checkPrevious, checkNext})
+                        if(eventDelta.x > 0 && !checkNext) {
+                            // eventDelta.x = 0
+                            xDeltaIsZero = true
+                        } else if(eventDelta.x < 0 && !checkPrevious) {
+                            // eventDelta.x = 0
+                            xDeltaIsZero = true
+                        }
+                        // xDeltaIsZero = true
+
+                    }
+                }
+                if(xDeltaIsZero) {
+                    eventDelta.x = 0
+                } if(yDeltaIsZero) {
+                    eventDelta.y = 0
                 }
 
-                // if(canMoveSegment) {
-                    if(xDeltaIsZero) {
-                        eventDelta.x = 0
+                const addWithRespectToDisplay = (point, delta) => {
+                    const added = point.add(delta)
+                    if(added.y > paper.view.viewSize.height) {
+                        added.y = paper.view.viewSize.height
+                    } else if(added.y < 0) {
+                        added.y = 0
                     }
-                    hitResult.segment.point = hitResult.segment.point.add(eventDelta)
-                    path.smooth()
-                // }
+                    return added
+                }
+                
+                hitResult.segment.point = addWithRespectToDisplay(hitResult.segment.point, eventDelta)
+                path.smooth({ from: index - 1, to: index + 1})
             } else if(hitResult.type === `handle-in`) {
                 hitResult.segment.handleIn = hitResult.segment.handleIn.add(event.delta)
             } else if(hitResult.type === `handle-out`) {
@@ -221,7 +251,15 @@ const Paper = ({ bezierPoints }) => {
 
         }
         
-    };
+    }
+
+    // tool.onMouseUp = (event) => {
+    //     event.preventDefault()
+    //     console.log(`up`)
+    //     if(isCreatingNewSegmentRef.current) {
+    //         console.log(`re render the beziers`)
+    //     }
+    // }
 
       
 
@@ -245,4 +283,4 @@ const Paper = ({ bezierPoints }) => {
     )
 }
 
-export default Paper;
+export default Paper
