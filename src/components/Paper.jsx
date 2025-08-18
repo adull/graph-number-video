@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { paper } from 'paper'
 
-const Paper = ({ bezierPoints }) => {
+const Paper = ({ form, setFrames, bezierPoints }) => {
     // console.log({bezierPoints})
     const parentRef = useRef(null)
     const childRef = useRef(null)
@@ -11,13 +11,49 @@ const Paper = ({ bezierPoints }) => {
     // for use with the tool
     const hitOptions = {
         segments: true,
-        handles: true,
+        // handles: true,
         stroke: true,
         fill: true,
         tolerance: 5
     }
 
     const [display, setDisplay] = useState({ width: 0, height: 0})
+
+    const toFixedIfNecessary = ( value, dp ) => {
+        return +parseFloat(value).toFixed( dp );
+    }
+
+    useEffect(() => {
+        let { minVal, maxVal, time } = form;
+        [minVal, maxVal, time] = [Number(minVal), Number(maxVal), Number(time)]
+        const find = paper?.project?.getItems({ name: `bezierLine` })
+        if(find) {
+            const path = find[0]
+            const DECIMAL_POINTS = 3
+            const NUM_FRAMES = Math.ceil(60 * form.time)
+            const EVEN_PART = path.length / NUM_FRAMES
+            const range = maxVal - minVal
+            const { width, height } = display
+
+            const frames = []
+            // console.log({minVal, maxVal, time})
+            console.log({path})
+            
+            for(let i = 0; i <= NUM_FRAMES; i ++) {
+                const offset = EVEN_PART * i
+                const point = path.getPointAt(offset)
+                console.log({ point })
+                const yPercent = (height - point.y) / height
+                // console.log(yPercent)
+                frames.push({
+                    index: i,
+                    val: toFixedIfNecessary(range * yPercent + minVal, DECIMAL_POINTS)
+                })
+            }
+            setFrames(frames)
+        }
+        
+    }, [form])
 
     useEffect(() => {
         console.log(`useeffect [] draw`)
@@ -211,7 +247,7 @@ const Paper = ({ bezierPoints }) => {
                     const checkNext = sampleBezierX(segments[index], segments[index + 1])
                     // console.log({checkPrevious, checkNext})
                     if(!checkPrevious || !checkNext) {
-                        console.log({ checkPrevious, checkNext})
+                        // console.log({ checkPrevious, checkNext})
                         if(eventDelta.x > 0 && !checkNext) {
                             // eventDelta.x = 0
                             xDeltaIsZero = true
