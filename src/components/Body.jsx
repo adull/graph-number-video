@@ -7,7 +7,7 @@ import RenderedVideo from './RenderedVideo'
 const Body = () => {
     const [height, setHeight] = useState(300)
     const [frames, setFrames] = useState([])
-    const [form, setForm] = useState({ minVal: 0, maxVal: 10, time: 5 })
+    const [form, setForm] = useState({ minVal: 0, maxVal: 10, time: 5, fps: 10 })
     const [bezierPoints, setBezierPoints] = useState([])
 
     useEffect(() => {
@@ -24,7 +24,7 @@ const Body = () => {
             </div>
             </div>
             <Form form={form} setForm={setForm}/>
-            <RenderedVideo frames={frames} />
+            <RenderedVideo frames={frames} fps={form.fps} />
         </div>
     );
 }

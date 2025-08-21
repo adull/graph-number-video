@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 
-const RenderedVideo = ({ frames }) => {
+const RenderedVideo = ({ frames, fps }) => {
   const canvasRef = useRef(null);
 //   const [recorder, setRecorder] = useState(null);
 
@@ -13,7 +13,7 @@ const RenderedVideo = ({ frames }) => {
     const ctx = canvas.getContext("2d");
 
     // Setup recorder
-    const stream = canvas.captureStream(60);
+    const stream = canvas.captureStream(6);
 
     const options = [
         "video/webm;codecs=vp9",    // best quality if supported
@@ -43,37 +43,33 @@ const RenderedVideo = ({ frames }) => {
       a.href = url;
       a.download = "animation.webm";
       document.body.appendChild(a)
-    //   a.click();
     };
 
-    // Animation variables
-    let startTime = null;
-    const duration = frames[frames.length - 1].index / 60; // in seconds
+    let frameIndex = 0;
 
-    console.log({ duration })
+    console.log({ frames })
+    const draw = () => {
+        if (frameIndex >= frames.length) {
+            mediaRecorder.stop();
+            return;
+        }
 
-    const draw = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = (timestamp - startTime) / 1000; // sec
+        const value = frames[frameIndex].val; 
+        console.log({ frameIndex, value})
 
-      // Clear
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Clear
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Interpolated value
-      const value = getInterpolated(frames, elapsed);
+        // Draw value
+        ctx.fillStyle = "white";
+        ctx.font = "48px sans-serif";
+        ctx.fillText(value.toFixed(0), 100, 100);
 
-      // Draw value
-      ctx.fillStyle = "white";
-      ctx.font = "48px sans-serif";
-      ctx.fillText(value.toFixed(2), 100, 100);
+        frameIndex++;
 
-      if (elapsed < duration) {
-        requestAnimationFrame(draw);
-      } else {
-        mediaRecorder.stop();
-      }
-    };
+        setTimeout(() => requestAnimationFrame(draw), 500 / fps);
+    }; 
 
     // Start recording + animation
     mediaRecorder.start();

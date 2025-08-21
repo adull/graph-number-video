@@ -24,13 +24,15 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
     }
 
     useEffect(() => {
-        let { minVal, maxVal, time } = form;
+        let { minVal, maxVal, time, fps } = form;
         [minVal, maxVal, time] = [Number(minVal), Number(maxVal), Number(time)]
         const find = paper?.project?.getItems({ name: `bezierLine` })
         if(find) {
             const path = find[0]
             const DECIMAL_POINTS = 3
-            const NUM_FRAMES = Math.ceil(60 * form.time)
+            // const NUM_FRAMES = Math.ceil(60 * form.time)
+            // we want to render in 60 fps ideally, but the update rate looks crazy, switching to 6 fps to make video look better.
+            const NUM_FRAMES = Math.ceil(fps * form.time)
             const EVEN_PART = path.length / NUM_FRAMES
             const range = maxVal - minVal
             const { width, height } = display
@@ -42,9 +44,7 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
             for(let i = 0; i <= NUM_FRAMES; i ++) {
                 const offset = EVEN_PART * i
                 const point = path.getPointAt(offset)
-                console.log({ point })
                 const yPercent = (height - point.y) / height
-                // console.log(yPercent)
                 frames.push({
                     index: i,
                     val: toFixedIfNecessary(range * yPercent + minVal, DECIMAL_POINTS)
@@ -52,7 +52,6 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
             }
             setFrames(frames)
         }
-        
     }, [form])
 
     useEffect(() => {
@@ -208,7 +207,9 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
                 const index = hitResult.location.index + 1
                 const newSegment = path.insert(hitResult.location.index + 1, event.point)
 
-                path.smooth({ from: index - 1, to: index + 1})
+                // path.smooth({ from: index - 1, to: index + 1})
+                path.smooth()
+
                 hitResultRef.current = { type: 'segment', segment: newSegment, index }
 
             }
@@ -276,7 +277,8 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
                 }
                 
                 hitResult.segment.point = addWithRespectToDisplay(hitResult.segment.point, eventDelta)
-                path.smooth({ from: index - 1, to: index + 1})
+                // path.smooth({ from: index - 1, to: index + 1})
+                path.smooth()
             } else if(hitResult.type === `handle-in`) {
                 hitResult.segment.handleIn = hitResult.segment.handleIn.add(event.delta)
             } else if(hitResult.type === `handle-out`) {
