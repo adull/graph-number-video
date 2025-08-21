@@ -7,7 +7,7 @@ import RenderedVideo from './RenderedVideo'
 const Body = () => {
     const [height, setHeight] = useState(300)
     const [frames, setFrames] = useState([])
-    const [form, setForm] = useState({ minVal: 0, maxVal: 10, time: 5, fps: 10 })
+    const [form, setForm] = useState({ minVal: 0, maxVal: 10, time: 1, fps: 10 })
     const [bezierPoints, setBezierPoints] = useState([])
 
     useEffect(() => {
@@ -19,7 +19,7 @@ const Body = () => {
         <div className="container mx-auto pb-6">
             <EasingFunctionButtons setBezierPoints={setBezierPoints} />
             <div style={{ height }}>
-            <div className="border b-1 border-x-0 md:border-x-1 border-black h-[100%] w-full">
+            <div className="h-[100%] w-full">
                 <Paper bezierPoints={bezierPoints} form={form} setFrames={setFrames}/> 
             </div>
             </div>

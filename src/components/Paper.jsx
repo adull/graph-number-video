@@ -63,7 +63,7 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
           for (let entry of entries) {
             initPaper()
             const { width, height } = entry.contentRect
-            setDisplay({ width, height })
+            setDisplay({ width: width - 20, height })
 
             const canvas = document.getElementById(`paper`)
             if(canvas) {
@@ -302,7 +302,7 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
       
 
     return (
-        <div className="w-full h-full flex flex-col" ref={parentRef}>
+        <div className=" border b-1 border-t-0 border-r-0 border-black h-full flex flex-col" style={{marginLeft: 20}} ref={parentRef}>
             <canvas 
                 id="paper"
                 width={display.width}
