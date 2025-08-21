@@ -39,7 +39,7 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
 
             const frames = []
             // console.log({minVal, maxVal, time})
-            console.log({path})
+            let lastFrame = { }
             
             for(let i = 0; i <= NUM_FRAMES; i ++) {
                 const offset = EVEN_PART * i
@@ -49,7 +49,18 @@ const Paper = ({ form, setFrames, bezierPoints }) => {
                     index: i,
                     val: toFixedIfNecessary(range * yPercent + minVal, DECIMAL_POINTS)
                 })
+                if(i === NUM_FRAMES - 1) {
+                    lastFrame = {
+                        index: i,
+                        val: toFixedIfNecessary(range * yPercent + minVal, DECIMAL_POINTS)
+                    }
+                }
             }
+
+            for(let i = 0; i < 3; i ++) {
+                frames.push(lastFrame)
+            } 
+            
             setFrames(frames)
         }
     }, [form])
